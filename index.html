@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TechServ">
+<meta name="theme-color" content="#00d4aa">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<title>TechServ PRO</title>
+<style>
+:root {
+  --bg:#0c0f14; --surf:#141920; --card:#1a2130; --border:#252f40;
+  --accent:#00d4aa; --warn:#f5a623; --danger:#e83e4a; --txt:#e8edf5; --muted:#6b7a99;
+  --safe-top:env(safe-area-inset-top,0px); --safe-bot:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:Arial,sans-serif;background:var(--bg);color:var(--txt);min-height:100dvh;overscroll-behavior:none}
+
+/* ── HEADER ── */
+.header{
+  background:var(--surf);border-bottom:1px solid var(--border);
+  padding:14px 16px calc(14px) 16px;
+  padding-top:calc(14px + var(--safe-top));
+  display:flex;align-items:center;gap:10px;
+  position:sticky;top:0;z-index:50;
+}
+.header-logo{font-weight:900;font-size:20px;color:var(--accent);letter-spacing:-1px;flex:1}
+.header-logo small{color:var(--muted);font-size:11px;font-weight:400;display:block;letter-spacing:.5px;margin-top:-2px}
+
+/* ── DRIVE BAR ── */
+.drive-bar{
+  background:var(--surf);border-bottom:1px solid var(--border);
+  padding:8px 16px;display:flex;align-items:center;gap:10px;font-size:12px;flex-wrap:wrap;
+}
+.drive-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:all .3s}
+.drive-dot.ok{background:var(--accent);box-shadow:0 0 6px var(--accent)}
+.drive-dot.busy{background:var(--warn);animation:pulse 1s infinite}
+.drive-dot.err{background:var(--danger)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+#drive-lbl{color:var(--muted);flex:1}
+.drive-bar .btn{font-size:11px;padding:5px 12px}
+#last-save{color:var(--muted);font-size:10px}
+
+/* ── NAV TABS ── */
+.tabs{display:flex;background:var(--surf);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:1;min-width:70px;padding:10px 4px;text-align:center;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;user-select:none}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab .tab-badge{background:var(--danger);color:#fff;font-size:10px;padding:1px 5px;border-radius:10px;margin-left:4px}
+
+/* ── PAGES ── */
+.page{display:none;padding:16px;padding-bottom:calc(16px + var(--safe-bot))}
+.page.active{display:block}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit;white-space:nowrap}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--accent);color:#0c0f14}
+.btn-warn{background:var(--warn);color:#0c0f14}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-ghost{background:var(--card);color:var(--txt);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-sm{padding:5px 10px;font-size:11px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.action-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+
+/* ── INSTALL BANNER ── */
+.install-banner{background:linear-gradient(135deg,rgba(0,212,170,.15),rgba(0,212,170,.05));border:1px solid rgba(0,212,170,.3);border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px}
+.install-banner.hidden{display:none}
+.install-banner-txt{flex:1;font-size:13px}
+.install-banner-txt strong{display:block;margin-bottom:2px}
+.install-banner-txt span{color:var(--muted);font-size:11px}
+
+/* ── STATS ── */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+@media(min-width:500px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;position:relative;overflow:hidden}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat.g::before{background:var(--accent)}.stat.o::before{background:#ff6b35}
+.stat.w::before{background:var(--warn)}.stat.r::before{background:var(--danger)}
+.stat-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.stat-val{font-size:26px;font-weight:900}
+.stat.g .stat-val{color:var(--accent)}.stat.o .stat-val{color:#ff6b35}
+.stat.w .stat-val{color:var(--warn)}.stat.r .stat-val{color:var(--danger)}
+
+/* ── CARDS ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
+.card.overdue{border-left:4px solid var(--danger)}
+.card.due{border-left:4px solid var(--warn)}
+.card.ok{border-left:4px solid var(--accent)}
+.card-name{font-weight:700;font-size:15px;margin-bottom:4px}
+.card-meta{font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.6}
+.card-btns{display:flex;gap:6px;flex-wrap:wrap}
+.pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.pill-ok{background:rgba(0,212,170,.15);color:var(--accent)}
+.pill-due{background:rgba(245,166,35,.15);color:var(--warn)}
+.pill-overdue{background:rgba(232,62,74,.15);color:var(--danger)}
+
+/* ── SEARCH ── */
+.search{width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--txt);font-size:14px;outline:none;margin-bottom:12px;font-family:inherit}
+.search:focus{border-color:var(--accent)}
+.search::placeholder{color:var(--muted)}
+
+/* ── CALENDAR ── */
+.cal-header{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px}
+.cal-dow{text-align:center;font-size:10px;color:var(--muted);font-weight:600;padding:4px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-day{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px;min-height:52px;font-size:11px}
+.cal-day.today{border-color:var(--accent)}
+.cal-day.has-event{border-color:var(--warn)}
+.cal-day.past{opacity:.4}
+.cal-day-num{font-weight:700;font-size:12px;margin-bottom:2px}
+.cal-event{background:rgba(245,166,35,.2);border-radius:3px;padding:1px 4px;margin-bottom:2px;font-size:10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--warn)}
+.cal-event.overdue{background:rgba(232,62,74,.2);color:var(--danger)}
+.cal-nav{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.cal-nav h3{flex:1;text-align:center;font-size:15px}
+
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:flex-end;justify-content:center}
+.overlay.hidden{display:none}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:20px 20px 0 0;width:100%;max-width:540px;max-height:92dvh;overflow-y:auto;padding:20px 20px calc(20px + var(--safe-bot))}
+@media(min-width:600px){.overlay{align-items:center;padding:20px}.modal{border-radius:16px;max-height:90dvh}}
+.modal-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px}
+.modal h2{font-size:18px;margin-bottom:16px}
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
+.form-group input,.form-group textarea,.form-group select{width:100%;background:var(--surf);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--txt);font-size:14px;font-family:inherit;outline:none;transition:border .15s}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--accent)}
+.form-group textarea{resize:vertical;min-height:72px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:calc(16px + var(--safe-bot));left:50%;transform:translateX(-50%) translateY(20px);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 18px;font-size:13px;z-index:999;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.ok{border-left:3px solid var(--accent)}.toast.err{border-left:3px solid var(--danger)}.toast.warn{border-left:3px solid var(--warn)}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px}
+.empty .ei{font-size:44px;margin-bottom:10px}
+
+/* ── RANKING ── */
+.rank-item{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px}
+.rank-pos{font-size:22px;font-weight:900;width:36px;text-align:center;color:var(--accent)}
+.rank-info{flex:1}
+.rank-name{font-weight:700;font-size:14px}
+.rank-sub{font-size:12px;color:var(--muted)}
+.rank-count{font-size:20px;font-weight:900;color:var(--accent)}
+
+/* ── DRIVE BACKUP PANEL ── */
+.backup-panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px}
+.backup-panel h3{font-size:14px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.backup-panel p{font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-logo">TechServ <span style="color:var(--accent)">PRO</span><small>Control de Mantenimientos</small></div>
+  <button class="btn btn-ghost btn-sm" onclick="openModal('modal-client')">+ Cliente</button>
+</div>
+
+<!-- DRIVE BAR -->
+<div class="drive-bar">
+  <div class="drive-dot busy" id="drive-dot"></div>
+  <span id="drive-lbl">Cargando datos...</span>
+  <span id="last-save"></span>
+  <button class="btn btn-primary btn-sm" id="drive-save-btn" onclick="driveBackup()" disabled>☁️ Guardar en Drive</button>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="showTab('home')" id="tab-home">🏠 Inicio</div>
+  <div class="tab" onclick="showTab('clients')" id="tab-clients">👥 Clientes</div>
+  <div class="tab" onclick="showTab('calendar')" id="tab-calendar">📆 Calendario</div>
+  <div class="tab" onclick="showTab('alerts')" id="tab-alerts">🔔 Alertas<span class="tab-badge" id="alert-count">0</span></div>
+  <div class="tab" onclick="showTab('ranking')" id="tab-ranking">🏆 Ranking</div>
+  <div class="tab" onclick="showTab('backup')" id="tab-backup">💾 Backup</div>
+</div>
+
+<!-- ══ HOME ══ -->
+<div class="page active" id="page-home">
+  <div class="install-banner hidden" id="install-banner">
+    <span style="font-size:28px">📲</span>
+    <div class="install-banner-txt">
+      <strong>Instalá TechServ como app</strong>
+      <span>Ícono en tu pantalla, sin navegador, funciona offline</span>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="installPWA()">Instalar</button>
+    <button class="btn btn-ghost btn-sm" onclick="dismissInstall()" style="border:none;font-size:16px">✕</button>
+  </div>
+
+  <div class="stats" id="stats-row"></div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <strong>⏰ Pendientes urgentes</strong>
+    <button class="btn btn-warn btn-sm" onclick="sendMassWhatsApp()">📲 WhatsApp masivo</button>
+  </div>
+  <div id="home-alerts"></div>
+</div>
+
+<!-- ══ CLIENTS ══ -->
+<div class="page" id="page-clients">
+  <div class="action-row">
+    <button class="btn btn-primary" onclick="openModal('modal-client')">+ Nuevo cliente</button>
+    <select class="btn btn-ghost" id="filter-status" onchange="renderClients()">
+      <option value="">Todos</option>
+      <option value="overdue">Vencidos</option>
+      <option value="due">Por vencer</option>
+      <option value="ok">Al día</option>
+    </select>
+  </div>
+  <input class="search" type="text" placeholder="🔍  Buscar cliente..." oninput="renderClients()" id="search-clients">
+  <div id="clients-list"></div>
+</div>
+
+<!-- ══ CALENDAR ══ -->
+<div class="page" id="page-calendar">
+  <div class="cal-nav">
+    <button class="btn btn-ghost btn-sm" onclick="calPrev()">◀</button>
+    <h3 id="cal-title"></h3>
+    <button class="btn btn-ghost btn-sm" onclick="calNext()">▶</button>
+  </div>
+  <div class="cal-header" id="cal-dow"></div>
+  <div class="cal-grid" id="cal-grid"></div>
+</div>
+
+<!-- ══ ALERTS ══ -->
+<div class="page" id="page-alerts">
+  <div class="action-row">
+    <button class="btn btn-warn" onclick="sendMassWhatsApp()">📲 WhatsApp masivo</button>
+  </div>
+  <div id="alerts-list"></div>
+</div>
+
+<!-- ══ RANKING ══ -->
+<div class="page" id="page-ranking">
+  <p style="color:var(--muted);font-size:13px;margin-bottom:14px">Clientes con más mantenimientos realizados</p>
+  <div id="ranking-list"></div>
+</div>
+
+<!-- ══ BACKUP ══ -->
+<div class="page" id="page-backup">
+
+  <div class="backup-panel">
+    <h3>☁️ Google Drive</h3>
+    <p>Guardá todos tus datos en Drive para recuperarlos desde cualquier dispositivo ante cualquier inconveniente.</p>
+    <div class="action-row">
+      <button class="btn btn-primary" onclick="driveBackup()" id="backup-drive-btn">☁️ Guardar en Drive ahora</button>
+      <button class="btn btn-ghost" onclick="driveRestore()">📥 Restaurar desde Drive</button>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-top:8px" id="drive-backup-status"></div>
+  </div>
+
+  <div class="backup-panel">
+    <h3>💾 Backup local (archivo JSON)</h3>
+    <p>Descargá un archivo de respaldo a tu dispositivo. Podés importarlo más adelante para restaurar todo.</p>
+    <div class="action-row">
+      <button class="btn btn-primary" onclick="exportData()">⬇️ Descargar backup</button>
+      <label class="btn btn-ghost" style="cursor:pointer">
+        ⬆️ Importar backup
+        <input type="file" accept=".json" onchange="importData(event)" style="display:none">
+      </label>
+    </div>
+  </div>
+
+  <div class="backup-panel">
+    <h3>📊 Información</h3>
+    <div id="data-info" style="font-size:13px;color:var(--muted);line-height:2"></div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Cliente ══ -->
+<div class="overlay hidden" id="modal-client">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="modal-client-title">Nuevo cliente</h2>
+    <div class="form-row">
+      <div class="form-group"><label>Nombre / Empresa</label><input id="f-nombre" type="text" placeholder="Farmacia San Rafael" autocomplete="organization"></div>
+      <div class="form-group"><label>Teléfono</label><input id="f-tel" type="tel" placeholder="555-1234"></div>
+    </div>
+    <div class="form-group"><label>Dirección</label><input id="f-dir" type="text" placeholder="Av. Reforma #45"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Equipo</label><input id="f-equipo" type="text" placeholder="Aire acondicionado, UPS"></div>
+      <div class="form-group"><label>Frecuencia</label>
+        <select id="f-freq">
+          <option value="30">Mensual (30 d)</option>
+          <option value="60">Bimestral (60 d)</option>
+          <option value="90" selected>Trimestral (90 d)</option>
+          <option value="180">Semestral (180 d)</option>
+          <option value="365">Anual (365 d)</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>Insumos necesarios</label><input id="f-insumos" type="text" placeholder="Filtro HEPA, refrigerante R-410A"></div>
+    <div class="form-group"><label>Notas</label><textarea id="f-notas" placeholder="Acceso, horarios, contacto..."></textarea></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <button class="btn btn-ghost btn-sm" onclick="getLocation()" id="loc-btn">📍 Obtener ubicación</button>
+      <span id="loc-status" style="font-size:11px;color:var(--muted)"></span>
+    </div>
+    <input type="hidden" id="f-lat"><input type="hidden" id="f-lng">
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-client')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveClient()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Mantenimiento ══ -->
+<div class="overlay hidden" id="modal-mant">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>Registrar mantenimiento</h2>
+    <div class="form-row">
+      <div class="form-group"><label>Cliente</label><select id="m-cliente" onchange="setProximoAuto()"></select></div>
+      <div class="form-group"><label>Fecha realizado</label><input id="m-fecha" type="date"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Tipo</label>
+        <select id="m-tipo"><option>Preventivo</option><option>Correctivo</option><option>Instalación</option><option>Revisión</option></select>
+      </div>
+      <div class="form-group"><label>Próximo</label><input id="m-proximo" type="date"></div>
+    </div>
+    <div class="form-group"><label>Descripción</label><textarea id="m-desc" placeholder="Qué se hizo, observaciones..."></textarea></div>
+    <div class="form-group"><label>Insumos utilizados</label><input id="m-insumos" type="text" placeholder="1 filtro HEPA, 500g refrigerante"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-mant')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveMant()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+//  PWA
+// ══════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(e => console.warn('SW:', e)));
+}
+
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (!localStorage.getItem('install-dismissed')) {
+    document.getElementById('install-banner').classList.remove('hidden');
+  }
+});
+window.addEventListener('appinstalled', () => {
+  document.getElementById('install-banner').classList.add('hidden');
+  toast('¡App instalada! 🎉');
+});
+
+async function installPWA() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+  } else {
+    toast('En iOS: compartir → "Agregar a pantalla de inicio"', 'warn');
+  }
+}
+function dismissInstall() {
+  document.getElementById('install-banner').classList.add('hidden');
+  localStorage.setItem('install-dismissed', '1');
+}
+
+// ══════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════
+let clients = [];
+let mants   = [];
+let editingClientId = null;
+let mantForClientId = null;
+
+const LS_KEY = 'techserv_data';
+
+function saveLocal() {
+  localStorage.setItem(LS_KEY, JSON.stringify({ clients, mants, savedAt: new Date().toISOString() }));
+}
+
+function loadLocal() {
+  try {
+    const d = localStorage.getItem(LS_KEY);
+    if (d) { const p = JSON.parse(d); clients = p.clients||[]; mants = p.mants||[]; }
+  } catch(e) { console.warn(e); }
+}
+
+// ══════════════════════════════════════════
+//  DRIVE BACKUP
+// ══════════════════════════════════════════
+const MCP_URL      = 'https://drivemcp.googleapis.com/mcp/v1';
+const DRIVE_FILE   = 'techserv_pro_data.json';
+let   driveFileId  = localStorage.getItem('techserv_drive_file_id') || null;
+let   driveReady   = false;
+let   driveBusy    = false;
+
+function setDriveUI(state, label) {
+  const dot = document.getElementById('drive-dot');
+  dot.className = 'drive-dot ' + ({ok:'ok',busy:'busy',err:'err'}[state]||'err');
+  document.getElementById('drive-lbl').textContent = label;
+}
+
+async function callClaude(msg) {
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      mcp_servers: [{ type: 'url', url: MCP_URL, name: 'gdrive' }],
+      messages: [{ role: 'user', content: msg }]
+    })
+  });
+  if (!r.ok) throw new Error('API ' + r.status);
+  return r.json();
+}
+
+function extractJSON(data) {
+  const txt = data.content.filter(b => b.type==='text').map(b => b.text).join('');
+  const m = txt.match(/\{[\s\S]*\}/);
+  return m ? JSON.parse(m[0]) : null;
+}
+
+async function driveInit() {
+  setDriveUI('busy', 'Conectando con Drive...');
+  try {
+    const r = await callClaude(
+      `Search Google Drive for a file named "${DRIVE_FILE}". ` +
+      `Return ONLY JSON: {"found":true,"fileId":"..."} or {"found":false}`
+    );
+    const j = extractJSON(r);
+    if (j && j.found && j.fileId) {
+      driveFileId = j.fileId;
+      localStorage.setItem('techserv_drive_file_id', driveFileId);
+      driveReady = true;
+      setDriveUI('ok', 'Drive conectado ✓');
+      toast('Drive conectado correctamente');
+    } else {
+      driveReady = true;
+      setDriveUI('ok', 'Drive listo (sin datos previos)');
+      toast('No hay backup previo en Drive', 'warn');
+    }
+  } catch(e) {
+    console.warn(e);
+    setDriveUI('err', 'Sin conexión a Drive');
+    toast('Sin conexión a Drive — datos guardados localmente', 'warn');
+  }
+  document.getElementById('drive-save-btn').disabled = false;
+  document.getElementById('backup-drive-btn').disabled = false;
+  renderDataInfo();
+}
+
+async function driveBackup() {
+  if (driveBusy) return;
+  driveBusy = true;
+  setDriveUI('busy', 'Guardando en Drive...');
+  document.getElementById('drive-save-btn').disabled = true;
+  const payload = JSON.stringify({ clients, mants, savedAt: new Date().toISOString(), version: 1 });
+  saveLocal(); // always save local too
+  try {
+    if (driveFileId) {
+      await callClaude(
+        `Update the Google Drive file with ID "${driveFileId}" with this exact content: ${payload}. ` +
+        `Confirm with {"ok":true}`
+      );
+    } else {
+      const r = await callClaude(
+        `Create a new Google Drive file named "${DRIVE_FILE}" with this content: ${payload}. ` +
+        `Return ONLY JSON: {"ok":true,"fileId":"..."}`
+      );
+      const j = extractJSON(r);
+      if (j && j.fileId) {
+        driveFileId = j.fileId;
+        localStorage.setItem('techserv_drive_file_id', driveFileId);
+      }
+    }
+    const now = new Date().toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
+    setDriveUI('ok', 'Drive sincronizado ✓');
+    document.getElementById('last-save').textContent = 'Guardado ' + now;
+    document.getElementById('drive-backup-status').textContent = '✅ Último backup: ' + new Date().toLocaleString('es-AR');
+    localStorage.setItem('techserv_last_backup', new Date().toISOString());
+    toast('Datos guardados en Google Drive ☁️');
+  } catch(e) {
+    console.warn(e);
+    setDriveUI('err', 'Error al guardar en Drive');
+    toast('Error Drive — guardado localmente igual', 'err');
+  } finally {
+    driveBusy = false;
+    document.getElementById('drive-save-btn').disabled = false;
+  }
+}
+
+async function driveRestore() {
+  if (!driveFileId) { toast('No hay archivo en Drive todavía', 'warn'); return; }
+  if (!confirm('¿Restaurar datos desde Drive? Se reemplazarán los datos actuales.')) return;
+  setDriveUI('busy', 'Restaurando...');
+  try {
+    const r = await callClaude(
+      `Read the Google Drive file with ID "${driveFileId}". Return ONLY the raw JSON content of the file.`
+    );
+    const txt = r.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    const m = txt.match(/\{[\s\S]*\}/);
+    if (m) {
+      const d = JSON.parse(m[0]);
+      clients = d.clients||[]; mants = d.mants||[];
+      saveLocal(); renderAll();
+      setDriveUI('ok', 'Datos restaurados ✓');
+      toast('Datos restaurados desde Drive ✅');
+    } else {
+      throw new Error('No se pudo leer el archivo');
+    }
+  } catch(e) {
+    console.warn(e);
+    setDriveUI('err', 'Error al restaurar');
+    toast('Error al restaurar desde Drive', 'err');
+  }
+}
+
+// Auto-save to Drive every 10 minutes if there are changes
+let pendingChanges = false;
+setInterval(() => {
+  if (pendingChanges && driveReady && !driveBusy) {
+    driveBackup();
+    pendingChanges = false;
+  }
+}, 10 * 60 * 1000);
+
+function markChanged() { saveLocal(); pendingChanges = true; }
+
+// ══════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════
+function nextId(arr) { return arr.length ? Math.max(...arr.map(x=>x.id))+1 : 1; }
+
+function getStatus(clientId) {
+  const cm = mants.filter(m=>m.clientId===clientId).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  if (!cm.length) return { status:'overdue', label:'Sin mantenimiento', days:null, date:null };
+  const last = cm[0];
+  if (!last.proximo) return { status:'ok', label:'Sin fecha próxima', days:null, date:null };
+  const days = Math.round((new Date(last.proximo)-new Date())/86400000);
+  if (days < 0) return { status:'overdue', label:`Vencido hace ${Math.abs(days)} días`, days, date:last.proximo };
+  if (days <= 15) return { status:'due', label:`Vence en ${days} días`, days, date:last.proximo };
+  return { status:'ok', label:`En ${days} días`, days, date:last.proximo };
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d+'T00:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
+}
+
+function formatPhone(p) {
+  let c = p.replace(/\D/g,'');
+  if (c.startsWith('0')) c = c.substring(1);
+  if (!c.startsWith('54')) c = '54' + c;
+  return c;
+}
+
+function sendWhatsApp(tel, name, statusLabel) {
+  const c = formatPhone(tel);
+  let msg = '';
+  if (statusLabel.includes('Vencido')) msg = `Hola ${name}, te escribo para avisarte que tu mantenimiento está vencido. ¿Cuándo te viene bien que pase?`;
+  else if (statusLabel.includes('Vence')) msg = `Hola ${name}, te aviso que tu mantenimiento está próximo a vencer. ¿Coordinamos una fecha?`;
+  else msg = `Hola ${name}, te contacto por el servicio de mantenimiento.`;
+  window.open(`https://wa.me/${c}?text=${encodeURIComponent(msg)}`);
+}
+
+function sendMassWhatsApp() {
+  const pending = clients.filter(c => getStatus(c.id).status !== 'ok');
+  if (!pending.length) { toast('¡No hay clientes pendientes!'); return; }
+  if (!confirm(`Vas a abrir WhatsApp para ${pending.length} cliente(s). ¿Continuar?`)) return;
+  pending.forEach((c, i) => {
+    setTimeout(() => sendWhatsApp(c.tel, c.nombre, getStatus(c.id).label), i * 800);
+  });
+}
+
+function openMap(lat, lng) {
+  if (!lat || !lng) { toast('Este cliente no tiene ubicación guardada', 'warn'); return; }
+  window.open(`https://www.google.com/maps?q=${lat},${lng}`);
+}
+
+function getLocation() {
+  document.getElementById('loc-status').textContent = 'Obteniendo...';
+  document.getElementById('loc-btn').disabled = true;
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      document.getElementById('f-lat').value = pos.coords.latitude;
+      document.getElementById('f-lng').value = pos.coords.longitude;
+      document.getElementById('loc-status').textContent = `✅ ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
+      document.getElementById('loc-btn').disabled = false;
+    },
+    err => {
+      document.getElementById('loc-status').textContent = '❌ ' + err.message;
+      document.getElementById('loc-btn').disabled = false;
+    },
+    { enableHighAccuracy: true }
+  );
+}
+
+// ══════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+
+function showTab(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  if (name==='calendar') renderCalendar();
+  if (name==='ranking') renderRanking();
+  if (name==='backup') renderDataInfo();
+}
+
+// ══════════════════════════════════════════
+//  RENDER ALL
+// ══════════════════════════════════════════
+function renderAll() {
+  renderStats();
+  renderHomeAlerts();
+  renderClients();
+  renderAlerts();
+  renderRanking();
+  renderDataInfo();
+}
+
+// ── STATS ──
+function renderStats() {
+  const total = clients.length;
+  const pending = clients.filter(c => getStatus(c.id).status !== 'ok');
+  const overdue = pending.filter(c => getStatus(c.id).status === 'overdue');
+  const now = new Date();
+  const thisMonth = mants.filter(m => {
+    const d = new Date(m.fecha); return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+  });
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat g"><div class="stat-lbl">Clientes</div><div class="stat-val">${total}</div></div>
+    <div class="stat o"><div class="stat-lbl">Por vencer</div><div class="stat-val">${pending.length-overdue.length}</div></div>
+    <div class="stat r"><div class="stat-lbl">Vencidos</div><div class="stat-val">${overdue.length}</div></div>
+    <div class="stat w"><div class="stat-lbl">Este mes</div><div class="stat-val">${thisMonth.length}</div></div>
+  `;
+  const alertN = pending.length;
+  document.getElementById('alert-count').textContent = alertN;
+  document.getElementById('alert-count').style.display = alertN ? '' : 'none';
+}
+
+// ── HOME ALERTS ──
+function renderHomeAlerts() {
+  const el = document.getElementById('home-alerts');
+  const list = clients.filter(c=>getStatus(c.id).status!=='ok')
+    .sort((a,b)=>(getStatus(a.id).days||0)-(getStatus(b.id).days||0));
+  if (!list.length) { el.innerHTML='<div class="empty"><div class="ei">✅</div>Todos los mantenimientos al día</div>'; return; }
+  el.innerHTML = list.slice(0,6).map(c=>alertCard(c)).join('');
+}
+
+function alertCard(c) {
+  const s = getStatus(c.id);
+  const cls = s.status==='overdue'?'overdue':'due';
+  const icon = s.status==='overdue'?'🚨':'⚠️';
+  return `<div class="card ${cls}">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <span>${icon}</span>
+      <span class="card-name" style="flex:1">${c.nombre}</span>
+      <span class="pill pill-${s.status}">${s.label}</span>
+    </div>
+    <div class="card-meta">📞 ${c.tel} · 📍 ${c.dir}</div>
+    <div class="card-btns">
+      <button class="btn btn-primary btn-sm" onclick="sendWhatsApp('${c.tel.replace(/'/g,"\\'")}','${c.nombre.replace(/'/g,"\\'")}','${s.label}')">📲 WhatsApp</button>
+      <button class="btn btn-ghost btn-sm" onclick="openMantFor(${c.id})">➕ Mantenimiento</button>
+      ${c.lat?`<button class="btn btn-ghost btn-sm" onclick="openMap(${c.lat},${c.lng})">🗺️ Mapa</button>`:''}
+    </div>
+  </div>`;
+}
+
+// ── CLIENTS ──
+function renderClients() {
+  const el = document.getElementById('clients-list');
+  const q = (document.getElementById('search-clients').value||'').toLowerCase();
+  const f = document.getElementById('filter-status').value;
+  let list = clients.filter(c => {
+    const s = getStatus(c.id);
+    const match = !q || c.nombre.toLowerCase().includes(q) || (c.tel&&c.tel.includes(q)) || (c.dir&&c.dir.toLowerCase().includes(q));
+    const fmatch = !f || s.status===f;
+    return match && fmatch;
+  });
+  if (!list.length) { el.innerHTML='<div class="empty"><div class="ei">🔍</div>Sin resultados</div>'; return; }
+  el.innerHTML = list.map(c => {
+    const s = getStatus(c.id);
+    return `<div class="card ${s.status}">
+      <div style="display:flex;align-items:flex-start;gap:8px">
+        <div style="flex:1">
+          <div class="card-name">${c.nombre}</div>
+          <div class="card-meta">
+            📞 ${c.tel||'—'}<br>
+            📍 ${c.dir||'—'}<br>
+            ${c.equipo?'⚙️ '+c.equipo+'<br>':''}
+            ${c.insumos?'🧴 '+c.insumos+'<br>':''}
+            ${c.notas?'📝 '+c.notas:''}
+          </div>
+        </div>
+        <span class="pill pill-${s.status}">${s.label}</span>
+      </div>
+      <div class="card-btns">
+        <button class="btn btn-primary btn-sm" onclick="sendWhatsApp('${c.tel.replace(/'/g,"\\'")}','${c.nombre.replace(/'/g,"\\'")}','${s.label}')">📲</button>
+        ${c.lat?`<button class="btn btn-ghost btn-sm" onclick="openMap(${c.lat},${c.lng})">🗺️</button>`:''}
+        <button class="btn btn-ghost btn-sm" onclick="openMantFor(${c.id})">➕ Mant.</button>
+        <button class="btn btn-ghost btn-sm" onclick="editClient(${c.id})">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteClient(${c.id})">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── ALERTS ──
+function renderAlerts() {
+  const el = document.getElementById('alerts-list');
+  const list = clients.filter(c=>getStatus(c.id).status!=='ok')
+    .sort((a,b)=>(getStatus(a.id).days||0)-(getStatus(b.id).days||0));
+  if (!list.length) { el.innerHTML='<div class="empty"><div class="ei">✅</div>Sin pendientes</div>'; return; }
+  el.innerHTML = list.map(c=>alertCard(c)).join('');
+}
+
+// ── CALENDAR ──
+function renderCalendar() {
+  const dows = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  document.getElementById('cal-dow').innerHTML = dows.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('cal-title').textContent = months[calMonth]+' '+calYear;
+
+  const first = new Date(calYear, calMonth, 1);
+  const last  = new Date(calYear, calMonth+1, 0);
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  let html = '';
+  // Empty cells before first day
+  for (let i=0; i<first.getDay(); i++) html += '<div></div>';
+
+  for (let d=1; d<=last.getDate(); d++) {
+    const date = new Date(calYear, calMonth, d);
+    const dateStr = date.toISOString().split('T')[0];
+    const events = mants.filter(m=>m.proximo===dateStr);
+    const isToday = date.getTime()===today.getTime();
+    const isPast  = date < today;
+    let cls = 'cal-day';
+    if (isToday) cls += ' today';
+    if (events.length) cls += ' has-event';
+    if (isPast) cls += ' past';
+    const evHTML = events.map(e=>{
+      const c = clients.find(x=>x.id===e.clientId);
+      const s = getStatus(e.clientId);
+      return `<div class="cal-event ${s.status==='overdue'?'overdue':''}">${c?c.nombre:''}</div>`;
+    }).join('');
+    html += `<div class="${cls}"><div class="cal-day-num">${d}</div>${evHTML}</div>`;
+  }
+  document.getElementById('cal-grid').innerHTML = html;
+}
+function calPrev() { calMonth--; if (calMonth<0){calMonth=11;calYear--;} renderCalendar(); }
+function calNext() { calMonth++; if (calMonth>11){calMonth=0;calYear++;} renderCalendar(); }
+
+// ── RANKING ──
+function renderRanking() {
+  const el = document.getElementById('ranking-list');
+  const count = {};
+  mants.forEach(m => { count[m.clientId]=(count[m.clientId]||0)+1; });
+  const sorted = Object.entries(count).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  if (!sorted.length) { el.innerHTML='<div class="empty"><div class="ei">📊</div>Sin datos aún</div>'; return; }
+  const medals = ['🥇','🥈','🥉'];
+  el.innerHTML = sorted.map(([id,n],i)=>{
+    const c = clients.find(x=>x.id==id);
+    return `<div class="rank-item">
+      <div class="rank-pos">${medals[i]||'#'+(i+1)}</div>
+      <div class="rank-info">
+        <div class="rank-name">${c?c.nombre:'Cliente eliminado'}</div>
+        <div class="rank-sub">${c?c.dir:'—'}</div>
+      </div>
+      <div class="rank-count">${n} <span style="font-size:12px;font-weight:400;color:var(--muted)">mant.</span></div>
+    </div>`;
+  }).join('');
+}
+
+// ── DATA INFO ──
+function renderDataInfo() {
+  const last = localStorage.getItem('techserv_last_backup');
+  const localSave = (() => { try { const d=JSON.parse(localStorage.getItem(LS_KEY)||'{}'); return d.savedAt||null; } catch{return null;} })();
+  document.getElementById('data-info').innerHTML = `
+    📋 Clientes: <strong>${clients.length}</strong><br>
+    🔧 Mantenimientos: <strong>${mants.length}</strong><br>
+    💾 Guardado local: <strong>${localSave?new Date(localSave).toLocaleString('es-AR'):'—'}</strong><br>
+    ☁️ Último backup Drive: <strong>${last?new Date(last).toLocaleString('es-AR'):'Nunca'}</strong>
+  `;
+}
+
+// ══════════════════════════════════════════
+//  CLIENT CRUD
+// ══════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+document.querySelectorAll('.overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target===o) o.classList.add('hidden'); });
+});
+
+function editClient(id) {
+  editingClientId = id;
+  const c = clients.find(x=>x.id===id);
+  document.getElementById('modal-client-title').textContent = 'Editar cliente';
+  document.getElementById('f-nombre').value = c.nombre||'';
+  document.getElementById('f-tel').value    = c.tel||'';
+  document.getElementById('f-dir').value    = c.dir||'';
+  document.getElementById('f-equipo').value = c.equipo||'';
+  document.getElementById('f-freq').value   = c.freq||90;
+  document.getElementById('f-insumos').value= c.insumos||'';
+  document.getElementById('f-notas').value  = c.notas||'';
+  document.getElementById('f-lat').value    = c.lat||'';
+  document.getElementById('f-lng').value    = c.lng||'';
+  document.getElementById('loc-status').textContent = c.lat ? `✅ ${c.lat.toFixed(4)}, ${c.lng.toFixed(4)}` : '';
+  openModal('modal-client');
+}
+
+function saveClient() {
+  const nombre = document.getElementById('f-nombre').value.trim();
+  if (!nombre) { toast('El nombre es obligatorio','err'); return; }
+  const data = {
+    nombre,
+    tel:     document.getElementById('f-tel').value.trim(),
+    dir:     document.getElementById('f-dir').value.trim(),
+    equipo:  document.getElementById('f-equipo').value.trim(),
+    freq:    parseInt(document.getElementById('f-freq').value)||90,
+    insumos: document.getElementById('f-insumos').value.trim(),
+    notas:   document.getElementById('f-notas').value.trim(),
+    lat:     parseFloat(document.getElementById('f-lat').value)||null,
+    lng:     parseFloat(document.getElementById('f-lng').value)||null,
+  };
+  if (editingClientId) {
+    const idx = clients.findIndex(x=>x.id===editingClientId);
+    clients[idx] = { ...clients[idx], ...data };
+    editingClientId = null;
+    toast('Cliente actualizado ✅');
+  } else {
+    clients.push({ id: nextId(clients), ...data });
+    toast('Cliente agregado ✅');
+  }
+  document.getElementById('modal-client-title').textContent = 'Nuevo cliente';
+  ['f-nombre','f-tel','f-dir','f-equipo','f-insumos','f-notas'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-lat').value=''; document.getElementById('f-lng').value='';
+  document.getElementById('loc-status').textContent='';
+  closeModal('modal-client');
+  markChanged(); renderAll();
+}
+
+function deleteClient(id) {
+  const c = clients.find(x=>x.id===id);
+  if (!confirm(`¿Eliminar a "${c.nombre}" y todos sus mantenimientos?`)) return;
+  clients = clients.filter(x=>x.id!==id);
+  mants   = mants.filter(m=>m.clientId!==id);
+  markChanged(); renderAll();
+  toast('Cliente eliminado');
+}
+
+// ══════════════════════════════════════════
+//  MANT CRUD
+// ══════════════════════════════════════════
+function openMantFor(clientId) {
+  mantForClientId = clientId;
+  const sel = document.getElementById('m-cliente');
+  sel.innerHTML = clients.map(c=>`<option value="${c.id}">${c.nombre}</option>`).join('');
+  sel.value = clientId;
+  document.getElementById('m-fecha').value = new Date().toISOString().split('T')[0];
+  setProximoAuto();
+  document.getElementById('m-desc').value='';
+  document.getElementById('m-insumos').value='';
+  openModal('modal-mant');
+}
+
+function setProximoAuto() {
+  const cId = parseInt(document.getElementById('m-cliente').value);
+  const c   = clients.find(x=>x.id===cId);
+  if (c && c.freq) {
+    const d = new Date(); d.setDate(d.getDate()+c.freq);
+    document.getElementById('m-proximo').value = d.toISOString().split('T')[0];
+  }
+}
+
+function saveMant() {
+  const clientId = parseInt(document.getElementById('m-cliente').value);
+  const fecha    = document.getElementById('m-fecha').value;
+  const tipo     = document.getElementById('m-tipo').value;
+  if (!fecha) { toast('La fecha es obligatoria','err'); return; }
+  mants.push({
+    id: nextId(mants),
+    clientId,
+    fecha,
+    tipo,
+    desc:    document.getElementById('m-desc').value.trim(),
+    insumos: document.getElementById('m-insumos').value.trim(),
+    proximo: document.getElementById('m-proximo').value,
+  });
+  closeModal('modal-mant');
+  markChanged(); renderAll();
+  toast('Mantenimiento registrado ✅');
+}
+
+// ══════════════════════════════════════════
+//  BACKUP LOCAL
+// ══════════════════════════════════════════
+function exportData() {
+  const blob = new Blob([JSON.stringify({clients,mants,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `techserv_backup_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  toast('Backup descargado ✅');
+}
+
+function importData(e) {
+  const file = e.target.files[0]; if (!file) return;
+  if (!confirm('¿Importar este backup? Se reemplazarán los datos actuales.')) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const d = JSON.parse(ev.target.result);
+      clients = d.clients||[]; mants = d.mants||[];
+      markChanged(); renderAll();
+      toast('Backup importado ✅');
+    } catch { toast('Archivo inválido','err'); }
+  };
+  reader.readAsText(file);
+}
+
+// ══════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════
+let toastTimer;
+function toast(msg, type='ok') {
+  const el = document.getElementById('toast');
+  const icons = {ok:'✅',err:'❌',warn:'⚠️'};
+  el.textContent = (icons[type]||'') + ' ' + msg;
+  el.className = `toast show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+loadLocal();
+renderAll();
+driveInit();
+</script>
+</body>
+</html>
